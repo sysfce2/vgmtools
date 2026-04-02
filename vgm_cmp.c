@@ -62,6 +62,7 @@ bool es5503_write(UINT8 Register, UINT8 Data);
 bool vsu_write(UINT16 Register, UINT8 Data);
 bool wswan_write(UINT8 Register, UINT8 Data);
 bool k005289_write(UINT8 Register, UINT16 Data);
+bool k007232_write(UINT8 Register, UINT8 Data);
 
 VGM_HEADER VGMHead;
 UINT32 VGMDataLen;
@@ -579,9 +580,8 @@ static void CompressVGMData(void)
 				CmdLen = 0x05;
 				break;
 			case 0x41:	// K007232 write
-				WriteEvent = true;
 				SetChipSet((VGMPnt[0x01] & 0x80) >> 7);
-			//	WriteEvent = chip_reg_write(0x1D, CurChip, 0x00, VGMPnt[0x01] & 0x7F, VGMPnt[0x02]);
+				WriteEvent = k007232_write(VGMPnt[0x01] & 0x7F, VGMPnt[0x02]);
 				CmdLen = 0x03;
 				break;
 			case 0x42:	// K005289 write

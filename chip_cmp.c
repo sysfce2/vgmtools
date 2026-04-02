@@ -272,6 +272,11 @@ typedef struct k005289_data
 	UINT16 RegData[0x8];
 	UINT8 RegFirst[0x8];
 } K005289_DATA;
+typedef struct k007232_data
+{
+	UINT8 RegData[0x20];
+	UINT8 RegFirst[0x20];
+} K007232_DATA;
 
 typedef struct all_chips
 {
@@ -313,6 +318,7 @@ typedef struct all_chips
 	WSWAN_DATA WSwan;
 	VSU_DATA VSU;
 	K005289_DATA K005289;
+	K007232_DATA K007232;
 } ALL_CHIPS;
 
 
@@ -363,6 +369,7 @@ bool es5503_write(UINT8 Register, UINT8 Data);
 bool vsu_write(UINT16 Register, UINT8 Data);
 bool wswan_write(UINT8 Register, UINT8 Data);
 bool k005289_write(UINT8 Register, UINT16 Data);
+bool k007232_write(UINT8 Register, UINT8 Data);
 
 // Function Prototypes from vgm_cmp.c
 bool GetNextChipCommand(void);
@@ -2808,6 +2815,49 @@ bool k005289_write(UINT8 Register, UINT16 Data)
 	{
 		if (chip->RegData[Register] != Data)
 			chip->RegFirst[0x04 | ChnBase] = 0x01;
+	}
+
+	if (! chip->RegFirst[Register] && Data == chip->RegData[Register])
+		return false;
+
+	chip->RegFirst[Register] = JustTimerCmds;
+	chip->RegData[Register] = Data;
+
+	return true;
+}
+
+bool k007232_write(UINT8 Register, UINT8 Data)
+{
+	K007232_DATA* chip = &ChDat->K007232;
+	UINT8 FreqMode;
+
+	if (Register >= 0x20)
+		return false;
+
+	switch (Register & 0x7F)
+	{
+	// Pitch MSB & Frequency mode
+	case 0x01:
+		FreqMode = chip->RegData[Register] & 0x30;
+		if ((Data & 0x30) != FreqMode)
+		{
+			chip->RegFirst[0x00] = 1;
+			chip->RegFirst[0x01] = 1;
+		}
+		break;
+	case 0x07:
+		FreqMode = chip->RegData[Register] & 0x30;
+		if ((Data & 0x30) != FreqMode)
+		{
+			chip->RegFirst[0x06] = 1;
+			chip->RegFirst[0x07] = 1;
+		}
+		break;
+	// Don't strip keyon trigger
+	case 0x05:
+	case 0x0B:
+	case 0x1F:
+		return true;
 	}
 
 	if (! chip->RegFirst[Register] && Data == chip->RegData[Register])
