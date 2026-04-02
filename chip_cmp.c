@@ -2708,7 +2708,7 @@ bool vsu_write(UINT16 Register, UINT8 Data)
 			break;
 		case 0x02:	// Frequency LSB
 		case 0x03:	// Frequency MSB
-			if (chip->RegData[ChnBaseReg | 0x05] & 0x40)	// Sweeo On
+			if (chip->RegData[ChnBaseReg | 0x05] & 0x40)	// Sweep On
 				chip->RegFirst[Register] = 0x01;
 			break;
 		case 0x04:	// Envelope
