@@ -267,6 +267,11 @@ typedef struct vsu_data
 	UINT8 RegData[0x160];
 	UINT8 RegFirst[0x160];
 } VSU_DATA;
+typedef struct k005289_data
+{
+	UINT16 RegData[0x8];
+	UINT8 RegFirst[0x8];
+} K005289_DATA;
 
 typedef struct all_chips
 {
@@ -307,6 +312,7 @@ typedef struct all_chips
 	X1_010_DATA X1_010;
 	WSWAN_DATA WSwan;
 	VSU_DATA VSU;
+	K005289_DATA K005289;
 } ALL_CHIPS;
 
 
@@ -356,6 +362,7 @@ bool x1_010_write(UINT16 Offset, UINT8 Value);
 bool es5503_write(UINT8 Register, UINT8 Data);
 bool vsu_write(UINT16 Register, UINT8 Data);
 bool wswan_write(UINT8 Register, UINT8 Data);
+bool k005289_write(UINT8 Register, UINT16 Data);
 
 // Function Prototypes from vgm_cmp.c
 bool GetNextChipCommand(void);
@@ -2784,5 +2791,30 @@ bool wswan_write(UINT8 Register, UINT8 Data)
 
 	chip->RegFirst[Register] = JustTimerCmds;
 	chip->RegData[Register] = Data;
+	return true;
+}
+
+bool k005289_write(UINT8 Register, UINT16 Data)
+{
+	K005289_DATA* chip = &ChDat->K005289;
+	UINT8 ChnBase;
+
+	if (Register >= 0x06)
+		return false;
+
+	ChnBase = Register & 0x01;
+
+	if ((Register & 0x06) == 0x02) // Frequency write
+	{
+		if (chip->RegData[Register] != Data)
+			chip->RegFirst[0x04 | ChnBase] = 0x01;
+	}
+
+	if (! chip->RegFirst[Register] && Data == chip->RegData[Register])
+		return false;
+
+	chip->RegFirst[Register] = JustTimerCmds;
+	chip->RegData[Register] = Data;
+
 	return true;
 }
